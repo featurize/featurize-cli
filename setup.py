@@ -9,13 +9,13 @@ with open(requirements_file, 'r') as f:
     required = f.read().splitlines()
 
 setuptools.setup(
-    name='featurize-cli',
+    name='featurize',
     version='0.0.1',
     author='chenglu',
     description='',
     packages=setuptools.find_packages(),
     install_requires=required,
     entry_points={
-        'console_scripts': ['featurize = featurize_cli:cli']
+        'console_scripts': ['featurize = featurize:cli']
     }
 )

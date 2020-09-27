@@ -1,12 +1,13 @@
-from featurize_cli.resource import ServiceError
-import os
 import json
+import os
 import sys
-import wcwidth as _
 
-from tabulate import tabulate
-from featurize_cli.featurize_client import FeaturizeClient
 import click
+import wcwidth as _  # noqa
+from tabulate import tabulate
+
+from .featurize_client import FeaturizeClient
+from .resource import ServiceError
 
 client = None
 
@@ -36,7 +37,7 @@ def ls(raw=False):
     if raw:
         return print(json.dumps(data))
 
-    data = [(instance['id'], instance['name'], instance['gpu'].split(',')[0], instance['unit_price'], instance['status'] == 'online') for instance in data ]
+    data = [(instance['id'], instance['name'], instance['gpu'].split(',')[0], instance['unit_price'], instance['status'] == 'online') for instance in data]
     print(tabulate(data, headers=['id', 'name', 'gpu', 'price', 'idle']))
 
 

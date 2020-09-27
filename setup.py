@@ -1,8 +1,9 @@
 """
 Setup Module to setup Python Handlers (Git Handlers) for the Git Plugin.
 """
-import setuptools
 import os
+
+import setuptools
 
 requirements_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'requirements.txt')
 with open(requirements_file, 'r') as f:

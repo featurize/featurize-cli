@@ -31,7 +31,7 @@ class Resource:
             method,
             url,
             headers={'Token': self.token},
-            timeout=10,
+            timeout=30,
             **kwargs)
 
         if req.status_code != 200:

@@ -16,7 +16,7 @@ class ServiceError(Exception):
 
 class Resource:
 
-    base = 'http://dev.featurize.ai:3000/bus/api/v1'
+    base = 'https://featurize.cn/bus/api/v1'
 
     def __init__(self, token):
         self.token = token

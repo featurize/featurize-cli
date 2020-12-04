@@ -54,7 +54,7 @@ def ls(raw=False):
     if raw:
         return print(json.dumps(data))
 
-    data = [(instance['id'], instance['name'], instance['gpu'].split(',')[0], instance['unit_price'], instance['status'] == 'online') for instance in data]
+    data = [(instance['id'], instance['name'], instance['gpu'].split(',')[0], instance['unit_price'], instance['status'] == 'online') for instance in data['records']]
     print(tabulate(data, headers=['id', 'name', 'gpu', 'price', 'idle']))
 
 

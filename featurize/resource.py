@@ -3,12 +3,12 @@ import requests
 
 class HTTPCodeError(Exception):
 
-    def __init__(self, code, response):
+    def __init__(self, code: str, response: requests.Response):
         super().__init__(f'HTTP request failed with code: {code}, body: {response}')
 
 
 class ServiceError(Exception):
-    def __init__(self, code, message):
+    def __init__(self, code: str, message: str):
         self.code = code
         self.message = message
         super().__init__(f'Error {code}: {message}')
@@ -18,10 +18,10 @@ class Resource:
 
     base = 'https://featurize.cn/bus/api/v1'
 
-    def __init__(self, token):
+    def __init__(self, token: str):
         self.token = token
 
-    def _http(self, url, method='get', data=None):
+    def _http(self, url: str, method: str = 'get', data: dict = None) -> requests.Response:
         url = f'{self.base}{url}'
         if method in ['get', 'delete', 'head']:
             kwargs = {'params': data}
@@ -46,14 +46,30 @@ class Resource:
 
 class Instance(Resource):
 
-    def __init__(self, token):
-        super().__init__(token)
-
-    def list(self):
+    def list(self) -> dict:
         return self._http('/available_instances')
 
-    def request(self, instance_id, term=None):
+    def request(self, instance_id: str) -> dict:
         return self._http(f'/instances/{instance_id}/request', 'post')
 
-    def release(self, instance_id):
+    def release(self, instance_id: str) -> dict:
         return self._http(f'/instances/{instance_id}/request', 'delete')
+
+
+class Dataset(Resource):
+
+    def create(self, name: str, range: str = 'private', description: str = '') -> dict:
+        return self._http(f'/datasets/', 'post', {
+            'name': name,
+            'description': description,
+            'range': range
+        })
+
+    def update(self, dataset_id: str, **kwargs) -> dict:
+        return self._http(f'/datasets/{dataset_id}', 'patch', kwargs)
+
+
+class OssCredentials(Resource):
+
+    def get(self) -> dict:
+        return self._http(f'/oss_credentials')

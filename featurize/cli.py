@@ -66,10 +66,9 @@ def ls(raw=False):
 
 @instance.command()
 @click.argument('instance_id')
-@click.option('-t', '--term', type=click.Choice(['daily', 'weekly', 'monthly'], case_sensitive=False))
-def request(instance_id, term):
+def request(instance_id):
     try:
-        client.instance.request(instance_id, term)
+        client.instance.request(instance_id)
     except ServiceError as e:
         if e.code == 10015:
             sys.exit('Error: requested instance is busy.')

@@ -42,7 +42,7 @@ def cli(token=None):
     global client
     _token = token or _find_token()
     if _token is None:
-        sys.exit('Token is missed')
+        sys.exit('Token is missed, please see doc: https://docs.featurize.cn/命令行工具')
 
     client = FeaturizeClient(token=_token)
 
@@ -106,7 +106,13 @@ def dataset():
 @click.option('-n', '--name', default='')
 @click.option('-r', '--range', type=Choice(['public', 'personal']), default='personal')
 @click.option('-d', '--description', default='')
-def upload(file, name, range, description):
+@click.option('-d', '--proxy', is_flag=True, default=False)
+def upload(file, name, range, description, proxy):
+    if not proxy:
+        os.environ['HTTP_PROXY'] = ''
+        os.environ['HTTPS_PROXY'] = ''
+        os.environ['http_proxy'] = ''
+        os.environ['https_proxy'] = ''
     if not (file.endswith(".zip") or file.endswith(".tar.gz")):
         sys.exit('Error: uploading file should be one of .zip or .tar.gz type')
     filepath = Path(file)

@@ -9,7 +9,7 @@ import wcwidth as _  # noqa
 from tabulate import tabulate
 from pathlib import Path
 import hashlib
-import oss2
+# import oss2
 from tqdm import tqdm
 import shutil
 
@@ -94,6 +94,21 @@ def release(instance_id):
         else:
             raise e
     print('Successfully released instance.')
+
+
+@cli.group()
+def notebook():
+    pass
+
+@notebook.command()
+@click.argument('file')
+@click.option('-n', '--name', required=True)
+def create(file: str, name: str):
+    try:
+        response = client.notebook.create(file, name)
+    except Exception as e:
+        sys.exit(f'Uncaught error {e}')
+    print(f'Successfully created public notebook, visit https://featurize.cn/notebooks/{response["digest"]}')
 
 
 @cli.group()

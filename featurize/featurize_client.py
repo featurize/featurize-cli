@@ -1,4 +1,4 @@
-from .resource import Instance, Dataset, OssCredentials
+from .resource import Instance, Dataset, OssCredentials, Notebook
 
 
 class FeaturizeClient:
@@ -23,3 +23,9 @@ class FeaturizeClient:
         if not hasattr(self, '_oss_credential'):
             self._oss_credential = OssCredentials(self.token)
         return self._oss_credential
+
+    @property
+    def notebook(self) -> Notebook:
+        if not hasattr(self, '_notebook'):
+            self._notebook = Notebook(self.token)
+        return self._notebook

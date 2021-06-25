@@ -1,5 +1,12 @@
+import hashlib
+from json.decoder import JSONDecodeError
 import requests
+import logging
+from pathlib import Path
+import json
+import os
 
+logger = logging.getLogger(__file__)
 
 class HTTPCodeError(Exception):
 
@@ -21,16 +28,22 @@ class Resource:
     def __init__(self, token: str):
         self.token = token
 
-    def _http(self, url: str, method: str = 'get', data: dict = None) -> requests.Response:
+    def _http(self, url: str, method: str = 'get', data: dict = None, headers: dict = {}, **kwargs) -> requests.Response:
         url = f'{self.base}{url}'
         if method in ['get', 'delete', 'head']:
-            kwargs = {'params': data}
+            kwargs = {
+                'params': data,
+                **kwargs
+            }
         else:
-            kwargs = {'json': data}
+            kwargs = {
+                'json': data,
+                **kwargs
+            }
         req = requests.request(
             method,
             url,
-            headers={'Token': self.token},
+            headers={'Token': self.token, **headers},
             timeout=30,
             **kwargs)
 
@@ -43,6 +56,18 @@ class Resource:
 
         return res['data']
 
+    @property
+    def cache_dir(self) -> Path:
+        from_env = os.getenv('FEATURIZE_CACHE_DIR')
+        path = Path(from_env) if from_env else (Path.home() / '.featurize')
+        if not path.exists():
+            path.mkdir(parents=True, exist_ok=True)
+        return path
+
+    def cache_file(self, name: str) -> Path:
+        file_path = self.cache_dir / name
+        return file_path
+
 
 class Instance(Resource):
 
@@ -54,6 +79,24 @@ class Instance(Resource):
 
     def release(self, instance_id: str) -> dict:
         return self._http(f'/instances/{instance_id}/request', 'delete')
+
+
+class Notebook(Resource):
+
+    def create(self, file: str, name: str):
+        # check cache file, if exists create version instead of notebook
+        s = hashlib.sha1()
+        s.update(file.encode())
+        cache_file_name = f"notebook.{s.hexdigest()}.json"
+        cache_file = self.cache_file(cache_file_name)
+        upload_files = {'file': open(file, 'rb')}
+        try:
+            notebook_id = json.loads(cache_file.read_text())["id"]
+            response = self._http(f'/notebooks/{notebook_id}/version', 'POST', params={'name': name}, files=upload_files)
+        except (JSONDecodeError, FileNotFoundError, KeyError):
+            response = self._http('/notebooks', 'POST', params={'name': name}, files=upload_files)
+        self.cache_file(cache_file_name).write_text(json.dumps(response))
+        return response
 
 
 class Dataset(Resource):

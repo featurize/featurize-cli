@@ -9,7 +9,7 @@ import wcwidth as _  # noqa
 from tabulate import tabulate
 from pathlib import Path
 import hashlib
-# import oss2
+import oss2
 from tqdm import tqdm
 import shutil
 

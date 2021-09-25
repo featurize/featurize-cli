@@ -2,6 +2,7 @@ import json
 from json.decoder import JSONDecodeError
 import os
 import sys
+import uuid
 
 import click
 from click.types import Choice
@@ -191,3 +192,14 @@ def upload(file, name, range, description, proxy):
     )
 
     shutil.rmtree(dataset_file.parent)
+
+@dataset.command()
+@click.argument('id')
+def download(id):
+    try:
+        id = uuid.UUID(hex=id)
+        client.dataset.download(
+            dataset_id=dataset['id']
+        )
+    except ValueError:
+        sys.exit("Error: id is not valid")

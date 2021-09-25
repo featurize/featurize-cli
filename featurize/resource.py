@@ -16,7 +16,7 @@ def to_camel_case(snake_str: str) -> str:
 
 
 def extract(source, dest):
-    out = os.system(f'unzip "{source}" -d {dest} >> ~/.server.log 2>&1 ')
+    out = os.system(f'unzip -f -u "{source}" -d {dest} >> ~/.server.log 2>&1 ')
     if out == 0:
         return 0
 
@@ -134,7 +134,7 @@ class Dataset(Resource):
 
     def download(self, dataset_id: str):
         dataset = self._http(f'/datasets/{dataset_id}')
-        if not dataset['upload']:
+        if not dataset['uploaded']:
             raise RuntimeError('Dataset uploaded')
         if dataset['cache_progress'] != 100:
             raise RuntimeError('Dataset is not synced yet, please try later')
@@ -144,7 +144,7 @@ class Dataset(Resource):
         dataset_dir = Path.home() / 'data'
         dataset_dir.mkdir(parents=True, exist_ok=True)
         dataset_file = dataset_dir / dataset['path'].split('/')[-1]
-        url = f'http://{dataset["cache"][to_camel_case(os.getenv("INSTANCE_REGION"))]}/{dataset["path"]}'
+        url = f'http://{dataset["cache"][os.getenv("INSTANCE_REGION")]}/{dataset["path"]}'
 
         with requests.get(url, stream=True, proxies={"http": "", "https": ""}) as resp:
             resp.raise_for_status()
@@ -155,12 +155,12 @@ class Dataset(Resource):
                     progress_bar.update(len(chunk))
                     data_fd.write(chunk)
             progress_bar.close()
-        print("🍬 下载完成，正在解压...")
+        print("🍬  下载完成，正在解压...")
         result = extract(dataset_file.resolve().as_posix(), dataset_dir.resolve().as_posix())
         if result != 0:
-            print("🐛 解压失败，请尝试手动解压或查看文件完整性")
+            print("🐛  解压失败，请尝试手动解压或查看文件完整性")
         else:
-            print("🏁 数据集以下载成功")
+            print("🏁  数据集已经成功添加")
 
 
 class OssCredentials(Resource):

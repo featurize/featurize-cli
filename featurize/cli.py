@@ -198,8 +198,6 @@ def upload(file, name, range, description, proxy):
 def download(id):
     try:
         id = uuid.UUID(hex=id)
-        client.dataset.download(
-            dataset_id=dataset['id']
-        )
+        client.dataset.download(dataset_id=str(id))
     except ValueError:
         sys.exit("Error: id is not valid")

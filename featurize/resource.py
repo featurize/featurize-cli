@@ -16,7 +16,7 @@ def to_camel_case(snake_str: str) -> str:
 
 
 def extract(source, dest):
-    out = os.system(f'unzip -f -u "{source}" -d {dest} >> ~/.server.log 2>&1 ')
+    out = os.system(f'unzip -o "{source}" -d {dest} >> ~/.server.log 2>&1 ')
     if out == 0:
         return 0
 

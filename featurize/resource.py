@@ -144,7 +144,7 @@ class Dataset(Resource):
         dataset_dir = Path.home() / 'data'
         dataset_dir.mkdir(parents=True, exist_ok=True)
         dataset_file = dataset_dir / dataset['path'].split('/')[-1]
-        url = f'http://{dataset["cache"][os.getenv("INSTANCE_REGION")]}/{dataset["path"]}'
+        url = f'http://{dataset["cache"]["yaan_1"]}/{dataset["path"]}'
 
         with requests.get(url, stream=True, proxies={"http": "", "https": ""}) as resp:
             resp.raise_for_status()

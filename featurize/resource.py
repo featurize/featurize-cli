@@ -42,7 +42,7 @@ class ServiceError(Exception):
 
 class Resource:
 
-    base = "https://bus.dev.featurize.cn/bus/api/v1"
+    base = "https://featurize.cn/bus/api/v1"
 
     def __init__(self, token: str, instance_id: str = None):
         self.token = token

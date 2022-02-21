@@ -1,31 +1,34 @@
-from .resource import Instance, Dataset, OssCredentials, Notebook
+from .resource import Instance, Dataset, OssCredentials, Notebook, Port
 
 
 class FeaturizeClient:
 
-    def __init__(self, token):
+    def __init__(self, token, instance_id=None):
         self.token = token
+        self.instance_id = instance_id
 
     @property
     def instance(self) -> Instance:
-        if not hasattr(self, '_instance'):
-            self._instance = Instance(self.token)
-        return self._instance
+        return self._get_resource(Instance)
+
+    @property
+    def port(self) -> Port:
+        return self._get_resource(Port)
 
     @property
     def dataset(self) -> Dataset:
-        if not hasattr(self, '_dataset'):
-            self._dataset = Dataset(self.token)
-        return self._dataset
+        return self._get_resource(Dataset)
 
     @property
     def oss_credential(self) -> OssCredentials:
-        if not hasattr(self, '_oss_credential'):
-            self._oss_credential = OssCredentials(self.token)
-        return self._oss_credential
+        return self._get_resource(OssCredentials)
 
     @property
     def notebook(self) -> Notebook:
-        if not hasattr(self, '_notebook'):
-            self._notebook = Notebook(self.token)
-        return self._notebook
+        return self._get_resource(Notebook)
+
+    def _get_resource(self, resource_type):
+        resource_name = resource_type.__class__.__name__
+        if not hasattr(self, resource_name):
+            setattr(self, resource_name, resource_type(self.token, self.instance_id))
+        return getattr(self, resource_name)

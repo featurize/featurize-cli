@@ -6,6 +6,7 @@ import uuid
 
 import click
 from click.types import Choice
+from featurize import create_client_from_env
 import wcwidth as _  # noqa
 from tabulate import tabulate
 from pathlib import Path
@@ -17,23 +18,7 @@ import shutil
 from .featurize_client import FeaturizeClient
 from .resource import ServiceError
 
-client = None
-
-
-def _find_token():
-    token_from_env = os.getenv('FEATURIZE_API_TOKEN')
-    cfg_file = os.getenv('FEATURIZE_CFG_FILE', os.path.join(os.getenv('HOME'), '.featurize.json'))
-    if token_from_env:
-        return token_from_env
-
-    try:
-        with open(cfg_file, 'r') as f:
-            cfg = json.load(f)
-        return cfg.get('token')
-    except FileNotFoundError:
-        return None
-    except JSONDecodeError:
-        sys.exit(f'config file {cfg_file} parse error')
+client : FeaturizeClient = None
 
 
 @click.group()
@@ -41,75 +26,41 @@ def _find_token():
               help='Your api token')
 def cli(token=None):
     global client
-    _token = token or _find_token()
-    if _token is None:
-        sys.exit('Token is missed, please see doc: https://docs.featurize.cn/命令行工具')
-
-    client = FeaturizeClient(token=_token)
+    client = create_client_from_env()
 
 
 @cli.group()
-def instance():
+def port():
     pass
 
 
-@instance.command()
-@click.option('-r', '--raw', is_flag=True, default=False,
-              help='Return raw data')
-def ls(raw=False):
-    data = client.instance.list()
+@port.command()
+@click.option("-f", "--format", default="tabulate")
+def list(format):
+    ports = client.port.list()
+    if format == "tabulate":
+        print(tabulate(ports, headers=("本地端口", "外部端口"), tablefmt='grid'))
+    elif format == "json":
+        print(json.dumps(ports))
+
+
+@port.command()
+@click.argument("local_port")
+@click.option("-r", "--raw", is_flag=True, default=False)
+def export(local_port, raw):
+    new_port = client.port.create(local_port)
     if raw:
-        return print(json.dumps(data))
-
-    data = [(instance['id'], instance['name'], instance['gpu'].split(',')[0], instance['unit_price'], instance['status'] == 'online') for instance in data['records']]
-    print(tabulate(data, headers=['id', 'name', 'gpu', 'price', 'idle']))
-
-
-@instance.command()
-@click.argument('instance_id')
-def request(instance_id):
-    try:
-        client.instance.request(instance_id)
-    except ServiceError as e:
-        if e.code == 10015:
-            sys.exit('Error: requested instance is busy.')
-        elif e.code == 10001:
-            sys.exit('Error: not enough balance.')
-        elif e.code == 10013:
-            sys.exit('Error: you can only request P106 or 1660 instances before charging')
-        else:
-            raise e
-    print('Successfully requested instance.')
+        print(new_port, end="")
+    else:
+        print(f"Local port {local_port} has been exported to {new_port}")
+        print(f"You can visit http://workspace.featurize.cn:{new_port} if it's a http server")
 
 
-@instance.command()
-@click.argument('instance_id')
-def release(instance_id):
-    try:
-        client.instance.release(instance_id)
-    except ServiceError as e:
-        if e.code == 10017:
-            sys.exit('Error: released instance is not busy.')
-        elif e.code == 10014:
-            sys.exit('Error: no need to release long term occupied instance.')
-        else:
-            raise e
-    print('Successfully released instance.')
-
-
-@cli.group()
-def notebook():
-    pass
-
-@notebook.command()
-@click.argument('file')
-@click.option('-n', '--name', required=True)
-def create(file: str, name: str):
-    try:
-        response = client.notebook.create(file, name)
-    except Exception as e:
-        sys.exit(f'Uncaught error {e}')
-    print(f'Successfully created public notebook, visit https://featurize.cn/notebooks/{response["digest"]}')
+@port.command()
+@click.argument("local_port")
+def unexport(local_port):
+    client.port.destroy(local_port)
+    print("done")
 
 
 @cli.group()

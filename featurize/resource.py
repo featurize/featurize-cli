@@ -200,6 +200,16 @@ class Dataset(Resource):
             print("🏁  数据集已经成功添加")
 
 
+class Event(Resource):
+
+    def create(self, title: str, content: str):
+        return self._http(
+            f"/virtual_machine/{self.instance_id}/custom_events",
+            "post",
+            params={"title": title, "content": content}
+        )
+
+
 class OssCredentials(Resource):
     def get(self) -> dict:
         return self._http(f"/oss_credentials")

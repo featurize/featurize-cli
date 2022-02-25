@@ -1,4 +1,4 @@
-from .resource import Instance, Dataset, OssCredentials, Notebook, Port
+from .resource import Instance, Dataset, OssCredentials, Notebook, Port, Event
 
 
 class FeaturizeClient:
@@ -10,6 +10,10 @@ class FeaturizeClient:
     @property
     def instance(self) -> Instance:
         return self._get_resource(Instance)
+
+    @property
+    def event(self) -> Event:
+        return self._get_resource(Event)
 
     @property
     def port(self) -> Port:

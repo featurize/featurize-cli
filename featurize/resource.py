@@ -42,7 +42,7 @@ class ServiceError(Exception):
 
 class Resource:
 
-    base = "https://featurize.cn/bus/api/v1"
+    base = "https://bus.dev.featurize.cn/bus/api/v1"
 
     def __init__(self, token: str, instance_id: str = None):
         self.token = token
@@ -93,14 +93,8 @@ class Resource:
 
 class Instance(Resource):
 
-    def list(self) -> dict:
-        return self._http("/available_instances")
-
-    def request(self, instance_id: str) -> dict:
-        return self._http(f"/instances/{instance_id}/request", "post")
-
-    def release(self, instance_id: str) -> dict:
-        return self._http(f"/instances/{instance_id}/request", "delete")
+    def release(self) -> dict:
+        return self._http(f"/virtual_machine/{self.instance_id}/release", "post")
 
 
 class Notebook(Resource):
@@ -206,7 +200,7 @@ class Event(Resource):
         return self._http(
             f"/virtual_machine/{self.instance_id}/custom_events",
             "post",
-            params={"title": title, "content": content}
+            {"title": title, "content": content}
         )
 
 

@@ -26,9 +26,9 @@ def create_client_from_env():
     token = _find_token()
     instance_id = _find_instance_id()
     if token is None:
-        sys.exit('Token is missed, please see doc: https://docs.featurize.cn/命令行工具')
+        sys.exit('Token is missed')
     return FeaturizeClient(token=token, instance_id=instance_id)
 
 
-__version__ = '0.0.18'
+__version__ = '0.0.19'
 __all__ = ['FeaturizeClient', 'create_client_from_env']

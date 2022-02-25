@@ -30,18 +30,30 @@ def cli(token=None):
 
 
 @cli.group()
-def port():
+def event():
     pass
 
 
-@port.command()
-@click.option("-f", "--format", default="tabulate")
-def list(format):
-    ports = client.port.list()
-    if format == "tabulate":
-        print(tabulate(ports, headers=("本地端口", "外部端口"), tablefmt='grid'))
-    elif format == "json":
-        print(json.dumps(ports))
+@event.command()
+@click.option("-t", "--title", required=True)
+@click.option("-c", "--content", required=True)
+def create(title, content):
+    client.event.create(title, content)
+
+
+@cli.group()
+def instance():
+    pass
+
+
+@instance.command()
+def release():
+    client.instance.release()
+
+
+@cli.group()
+def port():
+    pass
 
 
 @port.command()

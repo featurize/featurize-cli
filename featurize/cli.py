@@ -57,6 +57,16 @@ def port():
 
 
 @port.command()
+@click.option("-f", "--format", default="tabulate")
+def list(format):
+    ports = client.port.list()
+    if format == "tabulate":
+        print(tabulate(ports, headers=("本地端口", "外部端口"), tablefmt='grid'))
+    elif format == "json":
+        print(json.dumps(ports))
+
+
+@port.command()
 @click.argument("local_port")
 @click.option("-r", "--raw", is_flag=True, default=False)
 def export(local_port, raw):

@@ -100,8 +100,10 @@ def upload(file, name, range, description, proxy):
     if not proxy:
         os.environ['HTTP_PROXY'] = ''
         os.environ['HTTPS_PROXY'] = ''
-        os.environ['http_proxy'] = ''
+        os.environ['ALL_PROXY'] = ''
         os.environ['https_proxy'] = ''
+        os.environ['http_proxy'] = ''
+        os.environ['all_proxy'] = ''
     if not (file.endswith(".zip") or file.endswith(".tar.gz")):
         sys.exit('Error: uploading file should be one of .zip or .tar.gz type')
     filepath = Path(file)

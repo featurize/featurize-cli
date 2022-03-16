@@ -32,7 +32,7 @@ class FeaturizeClient:
         return self._get_resource(Notebook)
 
     def _get_resource(self, resource_type):
-        resource_name = resource_type.__class__.__name__
+        resource_name = resource_type.__name__
         if not hasattr(self, resource_name):
             setattr(self, resource_name, resource_type(self.token, self.instance_id))
         return getattr(self, resource_name)

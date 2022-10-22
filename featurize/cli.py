@@ -134,7 +134,7 @@ def upload(file, name, range, description, proxy):
         credential['AccessKeySecret'],
         credential['SecurityToken']
     )
-    bucket = oss2.Bucket(auth, 'http://oss-cn-beijing.aliyuncs.com', dataset['dataset_center']['bucket'])
+    bucket = oss2.Bucket(auth, 'http://oss-cn-chengdu.aliyuncs.com', dataset['dataset_center']['bucket'])
 
     def progress_callback(consumed_bytes, total_bytes):
         pbar.update(consumed_bytes - pbar.n)
@@ -160,7 +160,7 @@ def upload(file, name, range, description, proxy):
     client.dataset.update(
         dataset_id=dataset['id'],
         uploaded=True,
-        domain=f"{dataset['dataset_center']['bucket']}.oss-cn-beijing.aliyuncs.com",
+        domain=f"{dataset['dataset_center']['bucket']}.oss-cn-chengdu.aliyuncs.com",
         path=path,
         size=total_size,
         filename=filepath.name

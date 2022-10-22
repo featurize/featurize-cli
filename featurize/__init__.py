@@ -30,5 +30,5 @@ def create_client_from_env():
     return FeaturizeClient(token=token, instance_id=instance_id)
 
 
-__version__ = '0.0.22'
+__version__ = '0.0.23'
 __all__ = ['FeaturizeClient', 'create_client_from_env']

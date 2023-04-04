@@ -166,7 +166,6 @@ class Dataset(Resource):
         if dataset["cache_progress"] != 100:
             raise RuntimeError("Dataset is not synced yet, please try later")
 
-        path = dataset["path"]
         chunk_size = 1024 * 1024 * 4
         dataset_dir = Path.home() / "data"
         dataset_dir.mkdir(parents=True, exist_ok=True)

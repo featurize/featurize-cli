@@ -3,6 +3,7 @@ from json.decoder import JSONDecodeError
 import os
 import sys
 import uuid
+import time
 
 import click
 from click.types import Choice
@@ -97,76 +98,83 @@ def dataset():
 @click.option('-d', '--description', default='')
 @click.option('-d', '--proxy', is_flag=True, default=False)
 def upload(file, name, range, description, proxy):
-    if not proxy:
-        os.environ['HTTP_PROXY'] = ''
-        os.environ['HTTPS_PROXY'] = ''
-        os.environ['ALL_PROXY'] = ''
-        os.environ['https_proxy'] = ''
-        os.environ['http_proxy'] = ''
-        os.environ['all_proxy'] = ''
-    if not (file.endswith(".zip") or file.endswith(".tar.gz")):
-        sys.exit('Error: uploading file should be one of .zip or .tar.gz type')
-    filepath = Path(file)
-    total_size = filepath.stat().st_size
-    if not filepath.exists():
-        sys.exit('Error: file not exists')
-    name = name or filepath.name
-    sha1 = hashlib.sha1()
-    sha1.update((f"{filepath.name}-{total_size}").encode())
-    digest = sha1.hexdigest()
-    dataset_file = Path.home() / '.featurize' / f"file_upload_checkpoint_{digest}" / "dataset.json"
-    dataset_file.parent.mkdir(parents=True, exist_ok=True)
-    try:
-        dataset = json.loads(dataset_file.read_text())
-    except (FileNotFoundError, json.JSONDecodeError):
-        # init dataset
-        res = client.dataset.create(name, range, description)
-        dataset = {
-            'id': res['id'],
-            'dataset_center': res['dataset_center'],
-            'uploader_id': res['uploader_id'],
-            'consumed_bytes': 0
-        }
-        dataset_file.write_text(json.dumps(dataset))
-    credential = client.oss_credential.get()
-    auth = oss2.StsAuth(
-        credential['AccessKeyId'],
-        credential['AccessKeySecret'],
-        credential['SecurityToken']
-    )
-    bucket = oss2.Bucket(auth, 'http://oss-cn-chengdu.aliyuncs.com', dataset['dataset_center']['bucket'])
+    while True:
+        try:
+            if not proxy:
+                os.environ['HTTP_PROXY'] = ''
+                os.environ['HTTPS_PROXY'] = ''
+                os.environ['ALL_PROXY'] = ''
+                os.environ['https_proxy'] = ''
+                os.environ['http_proxy'] = ''
+                os.environ['all_proxy'] = ''
+            if not (file.endswith(".zip") or file.endswith(".tar.gz")):
+                sys.exit('Error: uploading file should be one of .zip or .tar.gz type')
+            filepath = Path(file)
+            total_size = filepath.stat().st_size
+            if not filepath.exists():
+                sys.exit('Error: file not exists')
+            name = name or filepath.name
+            sha1 = hashlib.sha1()
+            sha1.update((f"{filepath.name}-{total_size}").encode())
+            digest = sha1.hexdigest()
+            dataset_file = Path.home() / '.featurize' / f"file_upload_checkpoint_{digest}" / "dataset.json"
+            dataset_file.parent.mkdir(parents=True, exist_ok=True)
+            try:
+                dataset = json.loads(dataset_file.read_text())
+            except (FileNotFoundError, json.JSONDecodeError):
+                # init dataset
+                res = client.dataset.create(name, range, description)
+                dataset = {
+                    'id': res['id'],
+                    'dataset_center': res['dataset_center'],
+                    'uploader_id': res['uploader_id'],
+                    'consumed_bytes': 0
+                }
+                dataset_file.write_text(json.dumps(dataset))
+            credential = client.oss_credential.get()
+            auth = oss2.StsAuth(
+                credential['AccessKeyId'],
+                credential['AccessKeySecret'],
+                credential['SecurityToken']
+            )
+            bucket = oss2.Bucket(auth, 'http://oss-cn-chengdu.aliyuncs.com', dataset['dataset_center']['bucket'])
 
-    def progress_callback(consumed_bytes, total_bytes):
-        pbar.update(consumed_bytes - pbar.n)
-        dataset['consumed_bytes'] = consumed_bytes
-        dataset_file.write_text(json.dumps(dataset))
+            def progress_callback(consumed_bytes, total_bytes):
+                pbar.update(consumed_bytes - pbar.n)
+                dataset['consumed_bytes'] = consumed_bytes
+                dataset_file.write_text(json.dumps(dataset))
 
-    pbar = tqdm(total=total_size, unit='B', unit_scale=True)
-    path = f"{dataset['uploader_id']}_{dataset['id']}/{filepath.name}"
-    result = oss2.resumable_upload(
-        bucket,
-        path,
-        filepath.resolve().as_posix(),
-        store=oss2.ResumableStore(root='/tmp'),
-        multipart_threshold=8 * 1024 * 1024,
-        part_size=1024 * 1024 * 1,
-        num_threads=1,
-        progress_callback=progress_callback
-    )
+            pbar = tqdm(total=total_size, unit='B', unit_scale=True)
+            path = f"{dataset['uploader_id']}_{dataset['id']}/{filepath.name}"
+            result = oss2.resumable_upload(
+                bucket,
+                path,
+                filepath.resolve().as_posix(),
+                store=oss2.ResumableStore(root='/tmp'),
+                multipart_threshold=8 * 1024 * 1024,
+                part_size=1024 * 1024 * 1,
+                num_threads=1,
+                progress_callback=progress_callback
+            )
 
-    if result.status != 200:
-        sys.exit(f"Error: upload respond with code {result.status}")
+            if result.status != 200:
+                continue
 
-    client.dataset.update(
-        dataset_id=dataset['id'],
-        uploaded=True,
-        domain=f"{dataset['dataset_center']['bucket']}.oss-cn-chengdu.aliyuncs.com",
-        path=path,
-        size=total_size,
-        filename=filepath.name
-    )
+            client.dataset.update(
+                dataset_id=dataset['id'],
+                uploaded=True,
+                domain=f"{dataset['dataset_center']['bucket']}.oss-cn-chengdu.aliyuncs.com",
+                path=path,
+                size=total_size,
+                filename=filepath.name
+            )
 
-    shutil.rmtree(dataset_file.parent)
+            shutil.rmtree(dataset_file.parent)
+            break
+        except:
+            time.sleep(5)
+            pass
+
 
 @dataset.command()
 @click.argument('id')

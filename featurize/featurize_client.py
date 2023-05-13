@@ -1,4 +1,4 @@
-from .resource import Instance, Dataset, OssCredentials, Notebook, Port, Event
+from .resource import Instance, Dataset, OssCredentials, Notebook, Port, Event, TempToken
 
 
 class FeaturizeClient:
@@ -30,6 +30,10 @@ class FeaturizeClient:
     @property
     def notebook(self) -> Notebook:
         return self._get_resource(Notebook)
+
+    @property
+    def temptoken(self) -> TempToken:
+        return self._get_resource(TempToken)
 
     def _get_resource(self, resource_type):
         resource_name = resource_type.__name__

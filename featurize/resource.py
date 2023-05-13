@@ -203,6 +203,11 @@ class Event(Resource):
         )
 
 
+class TempToken(Resource):
+    def get(self) -> dict:
+        return self._http(f"/temp_token")
+
+
 class OssCredentials(Resource):
     def get(self) -> dict:
         return self._http(f"/oss_credentials")

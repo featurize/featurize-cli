@@ -15,6 +15,7 @@ import hashlib
 import oss2
 from tqdm import tqdm
 import shutil
+from simple_uploader import SimpleUploader
 
 from .featurize_client import FeaturizeClient
 from .resource import ServiceError
@@ -117,6 +118,7 @@ def upload(file, name, range, description, proxy):
             sha1 = hashlib.sha1()
             sha1.update((f"{filepath.name}-{total_size}").encode())
             digest = sha1.hexdigest()
+
             dataset_file = Path.home() / '.featurize' / f"file_upload_checkpoint_{digest}" / "dataset.json"
             dataset_file.parent.mkdir(parents=True, exist_ok=True)
             try:
@@ -131,47 +133,43 @@ def upload(file, name, range, description, proxy):
                     'consumed_bytes': 0
                 }
                 dataset_file.write_text(json.dumps(dataset))
-            credential = client.oss_credential.get()
-            auth = oss2.StsAuth(
-                credential['AccessKeyId'],
-                credential['AccessKeySecret'],
-                credential['SecurityToken']
-            )
-            bucket = oss2.Bucket(auth, 'http://oss-cn-chengdu.aliyuncs.com', dataset['dataset_center']['bucket'])
 
-            def progress_callback(consumed_bytes, total_bytes):
-                pbar.update(consumed_bytes - pbar.n)
-                dataset['consumed_bytes'] = consumed_bytes
-                dataset_file.write_text(json.dumps(dataset))
+            token = client.temptoken.get()["token"]
+            bar = tqdm(total=100, desc="🚀 正在上传")
+            def on_progress(progress):
+                bar.update(int(progress["finished_slice"] / progress["all_slice"] * 100) - bar.n)
 
-            pbar = tqdm(total=total_size, unit='B', unit_scale=True)
-            path = f"{dataset['uploader_id']}_{dataset['id']}/{filepath.name}"
-            result = oss2.resumable_upload(
-                bucket,
-                path,
-                filepath.resolve().as_posix(),
-                store=oss2.ResumableStore(root='/tmp'),
-                multipart_threshold=8 * 1024 * 1024,
-                part_size=1024 * 1024 * 1,
-                num_threads=1,
-                progress_callback=progress_callback
-            )
-
-            if result.status != 200:
-                continue
-
+            su = SimpleUploader(filepath, {
+                "endpoint": "https://nas.featurize.cn/users/files",
+                "on_progress": on_progress,
+                "prefix": f"{os.environ['FEATURIZE_USER_ID']}_{dataset['id']}",
+                "headers": {
+                    "Authorization": token,
+                    "User-Id": os.environ['FEATURIZE_USER_ID'],
+                }
+            })
+            su.upload()
+            res = su.checksum()
+            bar.update(100)
+            bar.close()
             client.dataset.update(
                 dataset_id=dataset['id'],
                 uploaded=True,
-                domain=f"{dataset['dataset_center']['bucket']}.oss-cn-chengdu.aliyuncs.com",
-                path=path,
+                cache_progress=100,
+                path=f"{dataset['uploader_id']}_{dataset['id']}/{filepath.name}",
                 size=total_size,
                 filename=filepath.name
             )
 
             shutil.rmtree(dataset_file.parent)
+
+            if res.failed_count == 0:
+                print(f"✅ 已成功上传！下载命令：featurize dataset download {dataset['id']}")
+            su.clear_meta()
             break
-        except:
+
+        except Exception as e:
+            print(e)
             time.sleep(5)
             pass
 

@@ -3,3 +3,5 @@ requests==2.24.0
 tabulate==0.8.7
 wcwidth==0.2.5
 oss2
+simple_uploader @ git+https://github.com/louis-she/simple-uploader@v0.0.16#subdirectory=clients/python
+

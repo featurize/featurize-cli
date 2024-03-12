@@ -88,7 +88,9 @@ class Resource:
 
     def _check_instance_id(self):
         if self.instance_id is None:
-            raise RuntimeError('Instance ID was not found, this command should been run in one of featurize instance')
+            raise RuntimeError(
+                "Instance ID was not found, this command should been run in one of featurize instance"
+            )
 
 
 class Instance(Resource):
@@ -130,10 +132,16 @@ class Port(Resource):
     def create(self, local_port: str) -> dict:
         try:
             self._check_instance_id()
-            return self._http(f"/virtual_machine/{self.instance_id}/exported_ports", "POST", params={"local_port": local_port})
+            return self._http(
+                f"/virtual_machine/{self.instance_id}/exported_ports",
+                "POST",
+                params={"local_port": local_port},
+            )
         except ServiceError as e:
             if e.code == 10029:
-                raise RuntimeError("Maximum number of exported ports reached, please unexport before export new ports")
+                raise RuntimeError(
+                    "Maximum number of exported ports reached, please unexport before export new ports"
+                )
             if e.code == 10030:
                 raise RuntimeError("Can not export / unexport system port 22")
 
@@ -141,7 +149,9 @@ class Port(Resource):
         self._check_instance_id()
         try:
             return self._http(
-                f"/virtual_machine/{self.instance_id}/exported_ports/{local_port}", "DELETE", params={"local_port": local_port}
+                f"/virtual_machine/{self.instance_id}/exported_ports/{local_port}",
+                "DELETE",
+                params={"local_port": local_port},
             )
         except ServiceError as e:
             if e.code == 10030:
@@ -160,6 +170,7 @@ class Dataset(Resource):
         return self._http(f"/datasets/{dataset_id}", "patch", kwargs)
 
     def download(self, dataset_id: str):
+        self._http(f"/datasets/{dataset_id}/used", "post")
         dataset = self._http(f"/datasets/{dataset_id}")
         if not dataset["uploaded"]:
             raise RuntimeError("Dataset uploaded")
@@ -199,7 +210,7 @@ class Event(Resource):
         return self._http(
             f"/virtual_machine/{self.instance_id}/custom_events",
             "post",
-            {"title": title, "content": content}
+            {"title": title, "content": content},
         )
 
 

@@ -14,7 +14,7 @@ with open(requirements_file, "r") as f:
 
 setuptools.setup(
     name="featurize",
-    version="0.0.26",
+    version="0.0.27",
     author="chenglu",
     description="",
     packages=setuptools.find_packages(),
